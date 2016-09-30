@@ -1,1 +1,2 @@
-# ortizjuan2_c2
+# ortizjuan2_c2 initial
+
