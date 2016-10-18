@@ -15,6 +15,15 @@ import os
 num_imgs_aprx = 0
 MIN_SPEED_FILTER =  1.0
 
+# Image size
+
+INPUT_WIDTH = 640
+INPUT_HIGH = 480
+INPUT_CHANN = 3
+
+OUTPUT_WIDTH = 160
+OUTPUT_HIGH = 120
+OUTPUT_CHANN = 3
 
 def make_ste_dict(ste_data, secs='secs', nsecs='nsecs', angle='steering_wheel_angle', speed='speed'):
     ''' Make a dictionary of steering messages, frequency interpolated to 100Hz ''' 
@@ -42,18 +51,20 @@ def make_ste_dict(ste_data, secs='secs', nsecs='nsecs', angle='steering_wheel_an
     return ste_dict
 
 
-def gen_images(camera_data, ste_dict, compress):
+def gen_images(camera_data, ste_dict, compress, maxoutput, skip):
     ''' Generate images file and steering angle information, 
-        two separated compressed files.
-        Images are downsampled to 240x320x3.
+        two separated imcompressed files.
+        Images are downsampled to OUTPUT_HIGHxOUTPUT_WIDTHxOUTPUT_CHANN.
     '''
     tname = time.strftime('%m%d%H%M%S')
-    img_f  = './imgs_240x320.' + tname + '.bin.gz'
+    img_f  = './imgs_'+str(OUTPUT_HIGH)+'x'+str(OUTPUT_WIDTH)+'.' + tname + '.bin.gz'
     ang_f = './ang_data.' + tname + '.bin.gz'
     imgs_written = 0
     num_img = 0
-    width = 320
-    height = 240
+    width = OUTPUT_WIDTH 
+    height = OUTPUT_HIGH 
+    if maxoutput < 0: maxoutput = 0
+    if skip < 0: skip = 0
     global num_imgs_aprx
     try:
         img_file = gzip.open(img_f, 'wb')
@@ -63,12 +74,6 @@ def gen_images(camera_data, ste_dict, compress):
         return -1 
     for msg in camera_data:
         num_img += 1
-        ''' DEBUG '''
-        if num_img <= 5000:
-            continue
-        if num_img >= 10000:
-            break
-        ''' DEBUG END '''
         sys.stdout.write("%2d%%" % ((num_img/num_imgs_aprx)*100))
         sys.stdout.flush()
         sys.stdout.write("\b"* (3))  
@@ -82,14 +87,14 @@ def gen_images(camera_data, ste_dict, compress):
                     best = [t, steer[i][0], steer[i][1], steer[i][2]] # nsecs, angle, speed
                 elif t <= 0.0: break
             if best[0] != 999999999:
-                ''' wirte image and angle to files, downsample to 240x320 '''
+                ''' wirte image and angle to file'''
                 imgs_written += 1
                 img = msg[1].data
                 img = np.array([[ord(x) for x in img]], dtype=np.uint8)
                 if compress == 'yes':
                     img = cv2.imdecode(img, cv2.IMREAD_REDUCED_COLOR_8 )
                 else:
-                    img = img.reshape(480, 640, 3)  
+                    img = img.reshape(INPUT_HIGH, INPUT_WIDTH,INPUT_CHANN)  
                 dst = cv2.resize(img,(width, height), 0, 0, cv2.INTER_LINEAR)
                 try:
                     img_file.write(dst.data[0:width*height*3])
@@ -101,35 +106,14 @@ def gen_images(camera_data, ste_dict, compress):
                     img_file.close()
                     ang_file.close()
                     return -1
+                if imgs_written <= skip and skip != 0:
+                    continue
+                if imgs_written >= (maxoutput+skip) and maxoutput != 0:
+                    break
     sys.stdout.write("100%\n")
     img_file.close()
     ang_file.close()
     return imgs_written
-
-    
-        
-    
-
-
-def read_images(file_name, sz=(240*320*3)):
-    ''' Read images file and load array of images '''
-    try: 
-        f = gzip.open(file_name, "rb")
-    except Exception as exc:
-        print "%s" % (exc)
-        return -1
-    img = f.read(sz)
-    img = np.array([[ord(x) for x in img]], dtype=np.uint8)
-    while True:
-        try:
-            r = f.read(sz)
-        except IOError as exc:
-            print "%s" % (exc)
-        if len(r) == 0 or len(r) < sz: break
-        r = np.array([[ord(x) for x in r]], dtype=np.uint8)
-        img = np.append(img,r,0)
-    f.close()
-    return img
 
 
 if __name__ == '__main__':
@@ -137,41 +121,44 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--camera", help="bag with camera messages", required=True )
     parser.add_argument("--steering", help="bag with steering angle messages", required=True)
-    parser.add_argument("--compressed", help="confirm if images are copressed or not", default="no")
+    parser.add_argument("--imcompressed", help="confirm if images are copressed or not", default="no")
+    parser.add_argument("--maxoutput", help="maximum number of output images desired", type=int, default=0)
+    parser.add_argument("--skip", help="number of initial images to skip, useful to generate different sets of images",
+            type=int, default=0)
     args = parser.parse_args()
 
     cam_bagname = args.camera
     ste_bagname = args.steering
     try:
-        sys.stdout.write("reading camera bag file, please wait...")
+        sys.stdout.write("Reading camera bag file, please wait...")
         sys.stdout.flush()
         cambag = rosbag.Bag(cam_bagname)
-        sys.stdout.write("done.\n")
-        sys.stdout.write("reading steering angle bag file, please wait...")
+        sys.stdout.write("Done.\n")
+        sys.stdout.write("Reading steering angle bag file, please wait...")
         sys.stdout.flush()
         stebag = rosbag.Bag(ste_bagname)
-        sys.stdout.write("done.\n")
+        sys.stdout.write("Done.\n")
     except Exception as exc:
         print "%s" % (exc)
         sys.exit(2)
     # get steering report messages
     ste_raw = stebag.read_messages(topics=['/vehicle/steering_report'])
-    sys.stdout.write("reading angle data, please wait... ")
+    sys.stdout.write("Reading angle data, please wait... ")
     ste = make_ste_dict(ste_raw)
-    print "completed."
+    print "Completed."
     print "%d seconds readed"%(len(ste))
     num_imgs_aprx = len(ste) * 20 
     #camera_data = bag.read_messages(topics=['/center_camera/image_color',\
     #        '/left_camera/image_color', '/right_camera/image_color'])
-    if args.compressed == 'yes':
+    if args.imcompressed == 'yes':
         camera_data = cambag.read_messages(topics=['/center_camera/image_color/compressed'])
     else:
         camera_data = cambag.read_messages(topics=['/center_camera/image_color'])
-    print 'generating images and angles files, please wait...' 
-    num_images = gen_images(camera_data, ste, args.compressed)
+    print 'Generating images and angles files, please wait...' 
+    num_images = gen_images(camera_data, ste, args.imcompressed, args.maxoutput, args.skip)
     if num_images > 0:
-        print "completed, %d images written." %(num_images)
-    else: print "process aborted."
+        print "Completed, %d images written." %(num_images)
+    else: print "Process aborted."
     cambag.close()
     stebag.close()
 

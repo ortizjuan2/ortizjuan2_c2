@@ -7,6 +7,12 @@ import cv2
 from math import cos, sin, pi
 import sys
 
+# Image size
+
+WIDTH = 160
+HIGH = 120
+CHANN = 3
+
 
 DATA_DIRS = "../2016-10-10"
 
@@ -167,8 +173,8 @@ class dataset:
         ''' END DEBUG'''
         return angs
 
-def show_video(f_imgs, angles_file, predict=None, t=10, frame_size=[240, 320, 3]):
-    cv2.namedWindow('Center Camera', cv2.WINDOW_NORMAL)
+def show_video(f_imgs, angles_file, predict=None, t=10, frame_size=[HIGH, WIDTH, CHANN]):
+    cv2.namedWindow('Center Camera', cv2.WINDOW_AUTOSIZE)
     cv2.startWindowThread()
     rows, cols, chan = frame_size
     sz = rows*cols*chan
@@ -196,7 +202,7 @@ def show_video(f_imgs, angles_file, predict=None, t=10, frame_size=[240, 320, 3]
         cv2.waitKey(t)
     cv2.destroyAllWindows()
     
-def draw_steering_angle(img, angle, frame_size=[240, 320, 3], color=[0, 255, 0]):
+def draw_steering_angle(img, angle, frame_size=[HIGH, WIDTH, CHANN], color=[0, 255, 0]):
     rows, cols, chan = frame_size
     line_len = rows / 2.0
     P1 = (int(cols/2), rows)
