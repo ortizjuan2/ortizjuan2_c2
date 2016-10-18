@@ -31,7 +31,7 @@ class dataset:
         VAL_IMAGES = DATA_DIRS + '/imgs_val.gz'
         VAL_ANGLES = DATA_DIRS + '/ang_val.gz'
 
-        self.image_size = (HIGH, WIDTH, CHANN)
+        self.image_size = (HIGH * WIDTH * CHANN)
         self.images = []
         self.batch_types = ['train', 'test', 'validation']
         self.batch_size = 0
