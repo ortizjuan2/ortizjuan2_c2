@@ -8,7 +8,7 @@ from math import cos, sin, pi
 import sys
 
 
-DATA_DIRS = "."
+DATA_DIRS = "../2016-10-10"
 
 class dataset:
     'read images and make them available for training, testing and validation'
@@ -18,12 +18,12 @@ class dataset:
     def __init__(self):
         print "opening training, test and validation files"
 
-        TRAIN_IMAGES = DATA_DIRS + '/imgs_240x320.1016070631.bin.gz'
-        TRAIN_ANGLES =  DATA_DIRS + '/ang_data.1016070631.bin.gz'
-        TEST_IMAGES = DATA_DIRS + '/imgs_240x320.1016070631.bin.gz'
-        TEST_ANGLES = DATA_DIRS + '/ang_data.1016070631.bin.gz'
-        VAL_IMAGES = DATA_DIRS + '/imgs_240x320.1016070631.bin.gz'
-        VAL_ANGLES = DATA_DIRS + '/ang_data.1016070631.bin.gz'
+        TRAIN_IMAGES = DATA_DIRS + '/imgs_240x320.1017202810.trn.gz'
+        TRAIN_ANGLES =  DATA_DIRS + '/ang_data.1017202810.trn.gz'
+        TEST_IMAGES = DATA_DIRS + '/imgs_240x320.1017203251.tst.gz'
+        TEST_ANGLES = DATA_DIRS + '/ang_data.1017203251.tst.gz'
+        VAL_IMAGES = DATA_DIRS + '/imgs_240x320.1017203802.val.gz'
+        VAL_ANGLES = DATA_DIRS + '/ang_data.1017203802.val.gz'
 
         self.image_size = (240*320*3)
         self.images = []
@@ -55,7 +55,7 @@ class dataset:
         except IOError as exc:
             print "%s" % (exc)
             sys.exit(2)
-        print "opening done!"
+        print "done!"
 
     def close(self):
         self.trn_ang_file.close()
@@ -70,6 +70,9 @@ class dataset:
        
         if batch_type == 'train':
             # read images in batch
+            '''DEBUG'''
+            #print "entering train, angles flag: %d" % (self.trn_angs_ready)
+            '''END DEBUG'''
             self.images,num_imgs_read = self._readimgs(self.trn_imgs_file)
             # read training angles once
             if self.trn_angs_ready == False:
@@ -89,11 +92,20 @@ class dataset:
         
         elif batch_type == 'test':
             # read images in batch
+            '''DEBUG'''
+            #print "entering test, angles flag: %d" % (self.tst_angs_ready)
+            '''END DEBUG'''
             self.images,num_imgs_read = self._readimgs(self.tst_imgs_file)
             # read training angles once
             if self.tst_angs_ready == False:
+                '''debug'''
+                #print "\tinside test angle false body"
+                ''' end debug'''
                 self.tst_angs = self._readangs(self.tst_ang_file)
                 self.tst_angs_ready = True
+            '''debug'''
+            #print "leaving test angle false body, angles readed: %d" %(len(self.tst_angs))
+            '''end debug'''
             ang_low_idx = self.tst_angs_idx
             ang_up_idx = ang_low_idx + num_imgs_read
             ret_angles = self.tst_angs[ang_low_idx:ang_up_idx]
@@ -108,6 +120,9 @@ class dataset:
         
         elif batch_type == 'validation':
             # read images in batch
+            '''DEBUG'''
+            #print "entering validation, angles flag: %d" % (self.val_angs_ready)
+            '''END DEBUG'''
             self.images,num_imgs_read = self._readimgs(self.val_imgs_file)
             # read training angles once
             if self.val_angs_ready == False:
@@ -139,16 +154,18 @@ class dataset:
         return [imgs, num_imgs_read] 
 
     def _readangs(self,f):
-        if self.trn_angs_ready == False:
-            try:
-                angles = f.readlines()
-            except IOError as exc:
-                print "%s" % (exc)
-                sys.exit(-1)
-            angs = np.array([float(angles[0])], dtype=np.float32)
-            for i in range(1, len(angles)):
-                angs = np.append(angs, [float(angles[i])],0)
-            return angs
+        try:
+            angles = f.readlines()
+        except IOError as exc:
+            print "%s" % (exc)
+            sys.exit(-1)
+        angs = np.array([float(angles[0])], dtype=np.float32)
+        for i in range(1, len(angles)):
+            angs = np.append(angs, [float(angles[i])],0)
+        '''DEBUG'''
+        #print "going to return angles: %d" % (len(angs))
+        ''' END DEBUG'''
+        return angs
 
 def show_video(f_imgs, angles_file, predict=None, t=10, frame_size=[240, 320, 3]):
     cv2.namedWindow('Center Camera', cv2.WINDOW_NORMAL)

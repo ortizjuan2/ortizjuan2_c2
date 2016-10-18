@@ -64,8 +64,10 @@ def gen_images(camera_data, ste_dict, compress):
     for msg in camera_data:
         num_img += 1
         ''' DEBUG '''
-        #if num_img >= 10000:
-        #    break
+        if num_img <= 5000:
+            continue
+        if num_img >= 10000:
+            break
         ''' DEBUG END '''
         sys.stdout.write("%2d%%" % ((num_img/num_imgs_aprx)*100))
         sys.stdout.flush()
