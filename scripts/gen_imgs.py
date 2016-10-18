@@ -88,9 +88,14 @@ def gen_images(camera_data, ste_dict, compress, maxoutput, skip):
                 elif t <= 0.0: break
             if best[0] != 999999999:
                 ''' wirte image and angle to file'''
+                if best[3] <= MIN_SPEED_FILTER:
+                    continue
                 imgs_written += 1
-                img = msg[1].data
-                img = np.array([[ord(x) for x in img]], dtype=np.uint8)
+                if imgs_written <= skip and skip != 0:
+                    continue
+                #img = msg[1].data
+                #img = np.array([[ord(x) for x in img]], dtype=np.uint8)
+                img = np.frombuffer(msg[1].data, dtype=np.uint8)
                 if compress == 'yes':
                     img = cv2.imdecode(img, cv2.IMREAD_REDUCED_COLOR_8 )
                 else:
@@ -106,14 +111,12 @@ def gen_images(camera_data, ste_dict, compress, maxoutput, skip):
                     img_file.close()
                     ang_file.close()
                     return -1
-                if imgs_written <= skip and skip != 0:
-                    continue
                 if imgs_written >= (maxoutput+skip) and maxoutput != 0:
                     break
     sys.stdout.write("100%\n")
     img_file.close()
     ang_file.close()
-    return imgs_written
+    return imgs_written-skip
 
 
 if __name__ == '__main__':
