@@ -155,6 +155,8 @@ class dataset:
         num_imgs_read = int(len(imgs) / self.image_size)
         if num_imgs_read < self.batch_size or num_imgs_read == 0:
             f.seek(0)
+            imgs = f.read(self.batch_size * self.image_size)
+            num_imgs_read = int(len(imgs) / self.image_size)
         imgs = np.frombuffer(imgs, dtype=np.uint8)
         imgs = imgs.reshape(num_imgs_read, self.image_size)
         return [imgs, num_imgs_read] 
