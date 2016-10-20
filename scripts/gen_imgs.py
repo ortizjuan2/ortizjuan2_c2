@@ -14,6 +14,7 @@ import os
 
 num_imgs_aprx = 0
 MIN_SPEED_FILTER =  1.0
+SKIP_FRAME = 10
 
 # Image size
 
@@ -61,6 +62,7 @@ def gen_images(camera_data, ste_dict, compress, maxoutput, skip):
     ang_f = './ang_data.' + tname + '.bin.gz'
     imgs_written = 0
     num_img = 0
+    skip_image = 0
     width = OUTPUT_WIDTH 
     height = OUTPUT_HIGH 
     if maxoutput < 0: maxoutput = 0
@@ -74,6 +76,10 @@ def gen_images(camera_data, ste_dict, compress, maxoutput, skip):
         return -1 
     for msg in camera_data:
         num_img += 1
+        skip_image += 1
+        if (skip_image%SKIP_FRAME) != 0:
+            continue
+        else: skip_image = 0
         sys.stdout.write("%2d%%" % ((num_img/num_imgs_aprx)*100))
         sys.stdout.flush()
         sys.stdout.write("\b"* (3))  
@@ -154,9 +160,11 @@ if __name__ == '__main__':
     #camera_data = bag.read_messages(topics=['/center_camera/image_color',\
     #        '/left_camera/image_color', '/right_camera/image_color'])
     if args.imcompressed == 'yes':
-        camera_data = cambag.read_messages(topics=['/center_camera/image_color/compressed'])
+        camera_data = cambag.read_messages(topics=['/center_camera/image_color/compressed','/left_camera/image_color/compressed', \
+                    '/right_camera/image_color/compressed'])
     else:
-        camera_data = cambag.read_messages(topics=['/center_camera/image_color'])
+        camera_data = cambag.read_messages(topics=['/center_camera/image_color','/left_camera/image_color/compressed', \
+                    '/right_camera/image_color/compressed'])
     print 'Generating images and angles files, please wait...' 
     num_images = gen_images(camera_data, ste, args.imcompressed, args.maxoutput, args.skip)
     if num_images > 0:

@@ -24,12 +24,12 @@ class dataset:
     def __init__(self):
         print "opening training, test and validation files"
 
-        TRAIN_IMAGES = DATA_DIRS + '/imgs_trn.gz'
-        TRAIN_ANGLES =  DATA_DIRS + '/ang_trn.gz'
-        TEST_IMAGES = DATA_DIRS + '/imgs_tst.gz'
-        TEST_ANGLES = DATA_DIRS + '/ang_tst.gz'
-        VAL_IMAGES = DATA_DIRS + '/imgs_val.gz'
-        VAL_ANGLES = DATA_DIRS + '/ang_val.gz'
+        TRAIN_IMAGES = DATA_DIRS + '/imgs_120x160.1019165221.bin.gz'
+        TRAIN_ANGLES =  DATA_DIRS + '/ang_data.1019165221.bin.gz'
+        TEST_IMAGES = DATA_DIRS + '/imgs_120x160.1019165512.bin.gz'
+        TEST_ANGLES = DATA_DIRS + '/ang_data.1019165512.bin.gz'
+        VAL_IMAGES = DATA_DIRS + '/imgs_120x160.1019170718.bin.gz'
+        VAL_ANGLES = DATA_DIRS + '/ang_data.1019170718.bin.gz'
 
         self.image_size = (HIGH * WIDTH * CHANN)
         self.images = []
