@@ -24,12 +24,12 @@ class dataset:
     def __init__(self):
         print "opening training, test and validation files"
 
-        TRAIN_IMAGES = DATA_DIRS + '/imgs_120x160.1019165221.bin.gz'
-        TRAIN_ANGLES =  DATA_DIRS + '/ang_data.1019165221.bin.gz'
-        TEST_IMAGES = DATA_DIRS + '/imgs_120x160.1019165512.bin.gz'
-        TEST_ANGLES = DATA_DIRS + '/ang_data.1019165512.bin.gz'
-        VAL_IMAGES = DATA_DIRS + '/imgs_120x160.1019170718.bin.gz'
-        VAL_ANGLES = DATA_DIRS + '/ang_data.1019170718.bin.gz'
+        TRAIN_IMAGES = DATA_DIRS + '/imgs_trn.bin.gz'
+        TRAIN_ANGLES =  DATA_DIRS + '/ang_trn.bin.gz'
+        TEST_IMAGES = DATA_DIRS + '/imgs_tst.bin.gz'
+        TEST_ANGLES = DATA_DIRS + '/ang_tst.bin.gz'
+        VAL_IMAGES = DATA_DIRS + '/imgs_val.bin.gz'
+        VAL_ANGLES = DATA_DIRS + '/ang_val.bin.gz'
 
         self.image_size = (HIGH * WIDTH * CHANN)
         self.images = []
@@ -86,6 +86,9 @@ class dataset:
                 self.trn_angs_ready = True
             ang_low_idx = self.trn_angs_idx
             ang_up_idx = ang_low_idx + num_imgs_read
+            if ang_up_idx > len(self.trn_angs):
+                ang_low_idx = 0 
+                ang_up_idx = num_imgs_read
             ret_angles = self.trn_angs[ang_low_idx:ang_up_idx]
             if len(ret_angles) == 0:
                 ang_low_idx = 0
@@ -170,12 +173,12 @@ class dataset:
         angs = np.array([float(angles[0])], dtype=np.float32)
         for i in range(1, len(angles)):
             angs = np.append(angs, [float(angles[i])],0)
-        '''DEBUG'''
-        #print "going to return angles: %d" % (len(angs))
-        ''' END DEBUG'''
+        # Mean normalization (-0.5 : 0.5)
+        angs = (angs - angs.mean())/(angs.max() - angs.min())
+
         return angs
 
-def show_video(f_imgs, angles_file, predict=None, t=10, frame_size=[HIGH, WIDTH, CHANN]):
+def show_video(f_imgs, angles_file, predict=None, t=60, frame_size=[HIGH, WIDTH, CHANN]):
     cv2.namedWindow('Center Camera', cv2.WINDOW_AUTOSIZE)
     cv2.startWindowThread()
     rows, cols, chan = frame_size
